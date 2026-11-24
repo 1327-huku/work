@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StudyQuest 課題トラッカー</title>
+<meta name="theme-color" content="#5b6cff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="StudyQuest">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="confetti"></canvas>
+
+<header class="top">
+  <div>
+    <div class="eyebrow" id="greet">こんにちは</div>
+    <h1>StudyQuest</h1>
+  </div>
+  <button class="icon-btn" data-action="toggle-theme" aria-label="テーマ切替">🌓</button>
+</header>
+
+<main>
+  <!-- ホーム -->
+  <section id="view-home" class="view active">
+    <div class="card hero">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 120 120" class="ring">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/>
+            </linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="52" class="ring-bg"/>
+          <circle cx="60" cy="60" r="52" class="ring-fg" id="ringFg" stroke="url(#g)"/>
+        </svg>
+        <div class="ring-text"><b id="ringPct">0%</b><small>全体の進捗</small></div>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span id="stStreak">0</span><small>🔥 連続日数</small></div>
+        <div class="stat"><span id="stTasks">0/0</span><small>✅ 課題</small></div>
+        <div class="stat"><span id="stToday">0</span><small>⚡ 今日の成果</small></div>
+        <div class="stat"><span id="stFocus">0</span><small>⏱ 今日の集中(分)</small></div>
+      </div>
+    </div>
+
+    <div class="card" id="nextCard">
+      <h2>📅 次の締切</h2>
+      <div id="nextList"></div>
+    </div>
+
+    <div class="section-head"><h2>教科ごとの進捗</h2><button class="chip" data-action="add-subject">＋ 教科を追加</button></div>
+    <div id="subjects"></div>
+
+    <div class="card">
+      <h2>📈 この7日間の活動</h2>
+      <div class="chart" id="chart"></div>
+    </div>
+  </section>
+
+  <!-- 課題 -->
+  <section id="view-tasks" class="view">
+    <form id="taskForm" class="card form">
+      <h2>＋ 課題を追加</h2>
+      <input type="text" id="tTitle" placeholder="例:プライム p.12〜15" required maxlength="80">
+      <div class="row">
+        <select id="tSubject"></select>
+        <input type="date" id="tDue">
+      </div>
+      <div class="row">
+        <select id="tPrio">
+          <option value="2">優先度:高 🔴</option>
+          <option value="1" selected>優先度:中 🟡</option>
+          <option value="0">優先度:低 🟢</option>
+        </select>
+        <button class="primary">追加</button>
+      </div>
+    </form>
+
+    <div class="filters">
+      <div class="seg" id="fStatus">
+        <button data-f="all" class="on">すべて</button>
+        <button data-f="todo">未完了</button>
+        <button data-f="done">完了</button>
+      </div>
+      <select id="fSubject"></select>
+    </div>
+    <input type="search" id="fSearch" class="search" placeholder="🔍 課題を検索">
+    <ul id="taskList" class="tasks"></ul>
+  </section>
+
+  <!-- タイマー -->
+  <section id="view-timer" class="view">
+    <div class="card timer">
+      <h2>⏱ 集中タイマー</h2>
+      <select id="timerSubject"></select>
+      <div class="timer-face" id="timerFace">25:00</div>
+      <div class="timer-mode" id="timerMode">集中モード</div>
+      <div class="row center">
+        <button class="primary" data-action="timer-toggle" id="timerBtn">スタート</button>
+        <button class="ghost" data-action="timer-reset">リセット</button>
+      </div>
+      <div class="row center small">
+        <label>集中 <input type="number" id="workMin" min="1" max="120" value="25"> 分</label>
+        <label>休憩 <input type="number" id="restMin" min="1" max="60" value="5"> 分</label>
+      </div>
+    </div>
+    <div class="card">
+      <h2>教科別の集中時間(累計)</h2>
+      <div id="focusStats"></div>
+    </div>
+  </section>
+
+  <!-- 設定 -->
+  <section id="view-settings" class="view">
+    <div class="card form">
+      <h2>⚙️ 設定</h2>
+      <label>名前(あいさつに使います)<input type="text" id="sName" maxlength="20" placeholder="例:たろう"></label>
+      <label>テーマ
+        <select id="sTheme">
+          <option value="auto">自動</option>
+          <option value="light">ライト</option>
+          <option value="dark">ダーク</option>
+        </select>
+      </label>
+    </div>
+    <div class="card form">
+      <h2>💾 バックアップ</h2>
+      <p class="muted">データはこの端末のブラウザに保存されています。兄弟で共有・引っ越しするときは書き出して読み込みます。</p>
+      <div class="row">
+        <button class="ghost" data-action="export">書き出し</button>
+        <button class="ghost" data-action="import">読み込み</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <button class="danger" data-action="reset">全データを消去</button>
+    </div>
+    <p class="muted center">StudyQuest v1.0</p>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button data-tab="home" class="on"><span>🏠</span>ホーム</button>
+  <button data-tab="tasks"><span>📝</span>課題</button>
+  <button data-tab="timer"><span>⏱</span>タイマー</button>
+  <button data-tab="settings"><span>⚙️</span>設定</button>
+</nav>
+
+<dialog id="subjectDialog">
+  <form method="dialog" id="subjectForm" class="form">
+    <h2 id="sdTitle">教科を編集</h2>
+    <label>名前<input type="text" id="sdName" required maxlength="20"></label>
+    <div class="row">
+      <label>絵文字<input type="text" id="sdEmoji" maxlength="2"></label>
+      <label>色<input type="color" id="sdColor"></label>
+    </div>
+    <div class="row">
+      <label>単位(ページ・枚・問など)<input type="text" id="sdUnit" maxlength="6"></label>
+      <label>全体の量<input type="number" id="sdTotal" min="1" max="9999"></label>
+    </div>
+    <label>終わった量<input type="number" id="sdDone" min="0" max="9999"></label>
+    <div class="row">
+      <button type="button" class="danger" id="sdDelete">削除</button>
+      <button type="button" class="ghost" id="sdCancel">閉じる</button>
+      <button class="primary" id="sdSave">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/store.js"></script>
+<script src="js/confetti.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
